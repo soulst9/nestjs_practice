@@ -1,0 +1,13 @@
+{
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "entryFile": "main",
+    "compilerOptions": {
+        "declaration": true,
+        "builder": "swc",
+        "typeCheck": true,
+        "watchAssets": true
+    },
+    "monorepo": false,
+    "root": "src"
+}
