@@ -1,2 +1,11 @@
-// Base Repository 관련 exports
-export { BaseRepository } from './base.repository';
+// Interfaces
+export {
+  BaseRepository,
+  PaginationOptions,
+  PaginatedResult,
+  UpdateResult,
+} from './interfaces/base-repository.interface';
+
+// Implementations
+export { MongooseRepository } from './mongoose.repository';
+export { TypeOrmRepository } from './typeorm.repository';

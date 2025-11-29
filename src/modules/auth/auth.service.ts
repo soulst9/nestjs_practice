@@ -6,14 +6,14 @@ import { winstonLogger } from '../../common/interceptors/winston-logger.config';
 import { OktaHttpClientService } from './clients/okta/okta-http-client.service';
 import { TokenService } from './services/token.service';
 import { PasswordService } from './services/password.service';
-import { IUserProvider, USER_PROVIDER, AuthUser } from './interfaces/user-provider.interface';
+import { UserProvider, USER_PROVIDER, AuthUser } from './interfaces/user-provider.interface';
 
 @Injectable()
 export class AuthService {
   private readonly logger = winstonLogger;
 
   constructor(
-    @Inject(USER_PROVIDER) private readonly userProvider: IUserProvider,
+    @Inject(USER_PROVIDER) private readonly userProvider: UserProvider,
     private readonly oktaHttpClientService: OktaHttpClientService,
     private readonly tokenService: TokenService,
     private readonly passwordService: PasswordService,

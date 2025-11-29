@@ -4,13 +4,13 @@ import { Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { ExtractJwt } from 'passport-jwt';
 import { Request } from 'express';
-import { IUserProvider, USER_PROVIDER } from '../interfaces/user-provider.interface';
+import { UserProvider, USER_PROVIDER } from '../interfaces/user-provider.interface';
 
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
     private configService: ConfigService,
-    @Inject(USER_PROVIDER) private userProvider: IUserProvider,
+    @Inject(USER_PROVIDER) private userProvider: UserProvider,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([

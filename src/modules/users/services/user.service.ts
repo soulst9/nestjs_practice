@@ -4,11 +4,11 @@ import { UserDocument } from '../schemas/user.schema';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { RedisService } from 'src/common/redis/redis.service';
 import { repositoryCache } from 'src/utils/cache-aside.util';
-import { IUserProvider, AuthUser } from '../../auth/interfaces/user-provider.interface';
+import { UserProvider, AuthUser } from '../../auth/interfaces/user-provider.interface';
 import { CacheKeyFactory } from 'src/common/cache/cache-key.factory';
 
 @Injectable()
-export class UsersService implements IUserProvider {
+export class UsersService implements UserProvider {
   private readonly userRepositoryCache: ReturnType<typeof repositoryCache<UserDocument>>;
 
   constructor(
@@ -28,8 +28,7 @@ export class UsersService implements IUserProvider {
    */
   async findOrCreateUser(createUserDto: CreateUserDto, session?: any): Promise<UserDocument> {
     const filterQuery = { email: createUserDto.email };
-    const options = session ? { session } : {};
-    const user = await this.userRepository.findOrCreate(filterQuery, createUserDto, false, options);
+    const user = await this.userRepository.findOrCreate(filterQuery, createUserDto, session);
     return user as UserDocument;
   }
 

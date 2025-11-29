@@ -16,7 +16,7 @@ export interface AuthUser {
  * Auth 모듈이 필요로 하는 사용자 관련 기능 인터페이스
  * Users 모듈의 구현체로부터 분리
  */
-export interface IUserProvider {
+export interface UserProvider {
   /**
    * 이메일로 사용자 조회
    */

@@ -1,4 +1,4 @@
-import { BaseRepository } from "src/common/repositories/base.repository";
+import { MongooseRepository } from "src/common/repositories/mongoose.repository";
 import { RedisService } from "src/common/redis/redis.service";
 import { FilterQuery, Document } from "mongoose";
 import { winstonLogger } from "src/common/interceptors/winston-logger.config";
@@ -8,7 +8,7 @@ const logger = winstonLogger;
 
 type CacheExpiry = number | Date;
 
-export const repositoryCache = <T extends Document>(repository: BaseRepository<T>, redisService: RedisService) => {
+export const repositoryCache = <T extends Document>(repository: MongooseRepository<T>, redisService: RedisService) => {
 
   async function setCacheWithExpiry(cacheKey: string, data: T, expiry: CacheExpiry) {
     if (typeof expiry === 'number') {
