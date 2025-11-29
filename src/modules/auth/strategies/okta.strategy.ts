@@ -1,13 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import oktaConfig, { OktaConfig } from '../../../common/config/okta.config';
 import { Strategy, Profile } from 'passport-openidconnect';
 import { winstonLogger } from '../../../common/interceptors/winston-logger.config';
 import { UsersService } from '../../users/services/user.service';
-import { MembersService } from '../../members/services/member.service';
-import { RoleChecker } from '../../../utils/role-checker.util';
 import { CreateUserDto } from '../../users/dto/create-user.dto';
-import { UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class OktaStrategy extends PassportStrategy(Strategy, 'okta') {
@@ -17,7 +14,6 @@ export class OktaStrategy extends PassportStrategy(Strategy, 'okta') {
     @Inject(oktaConfig.KEY)
     private config: OktaConfig,
     private usersService: UsersService,
-    private membersService: MembersService,
   ) {
     super({
       authorizationURL: `${config.issuer}/v1/authorize`,
@@ -74,20 +70,7 @@ export class OktaStrategy extends PassportStrategy(Strategy, 'okta') {
         employeeID: email.split('@')[0],
       };
 
-      // employeeID로 Member 조회
-      const memberRoleInfo = await this.membersService.findMemberByEmployeeID(createUserDto.employeeID);
-
-      if (Array.isArray(memberRoleInfo) || memberRoleInfo.roles.length === 0) {
-        throw new UnauthorizedException('Member not found');
-      }
-
-      // 역할 권한 체크: TEAM_LEADER, DIRECTOR, CTO만 접근 가능
-      if (!RoleChecker.isLeadershipRole(memberRoleInfo.roles)) {
-        throw new UnauthorizedException('Access denied: Insufficient role privileges. Only Team Leaders, Directors, and CTOs are allowed.');
-      }
-
-      // 사용자 생성 및 역할 할당 (트랜잭션으로 처리)
-      const user = await this.usersService.createUserWithRoles(createUserDto, memberRoleInfo);
+      const user = await this.usersService.findOrCreateUser(createUserDto);
 
       this.logger.info(`User authenticated successfully: ${user.email}`);
       done(null, user);

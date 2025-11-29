@@ -9,6 +9,8 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { OktaStrategy } from './strategies/okta.strategy';
+import { TokenService } from './services/token.service';
+import { PasswordService } from './services/password.service';
 
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OktaAuthGuard } from './guards/okta-auth.guard';
@@ -37,6 +39,8 @@ import { OktaHttpClientModule } from './clients/okta/okta-http-client.module';
   controllers: [AuthController],
   providers: [
     AuthService,
+    TokenService,
+    PasswordService,
     JwtStrategy,
     OktaStrategy,
     // 글로벌 가드 설정
@@ -46,6 +50,6 @@ import { OktaHttpClientModule } from './clients/okta/okta-http-client.module';
     },
     OktaAuthGuard,
   ],
-  exports: [AuthService],
+  exports: [AuthService, TokenService, PasswordService],
 })
 export class AuthModule {}

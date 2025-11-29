@@ -5,12 +5,11 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { LoginDto } from './dto/auth.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
-import { UserDocument } from '../users/schemas/user.schema';
 import { RefreshJwtGuard } from './guards/refresh-jwt.guard';
 import { winstonLogger } from '../../common/interceptors/winston-logger.config';
-// import { ConfigService } from '@nestjs/config';
 import { OktaAuthGuard } from './guards/okta-auth.guard';
 import oktaConfig, { OktaConfig } from '../../common/config/okta.config';
+import { AuthUser } from './interfaces/user-provider.interface';
 
 const isSecure = process.env.NODE_ENV === 'production';
 const sameSite = process.env.NODE_ENV === 'production' ? 'lax' : 'none';
@@ -75,13 +74,18 @@ export class AuthController {
   @UseGuards(RefreshJwtGuard)
   @Get('refresh-token')
   async refreshToken(@Req() req: Request, @Res() res: Response) {
-    const user = req.user as UserDocument;
-    const refreshToken = await this.authService.generateRefreshToken(user.email);
+    const user = req.user as AuthUser;
+    const tokens = await this.authService.refreshTokens(user.email);
 
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: isSecure,
-      maxAge: 15 * 60 * 1000
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: isSecure,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     return res.json({
       message: 'Refresh token successful',
@@ -125,7 +129,7 @@ export class AuthController {
       const code = req.query.code as string;
       this.logger.info('Okta callback code:' + code);
 
-      const tokens = await this.authService.oktaLogin(code, req.user as UserDocument);
+      const tokens = await this.authService.oktaLogin(code, req.user as AuthUser);
       this.logger.info('OktaLogin tokens generated successfully');
 
       res.cookie('accessToken', tokens.accessToken, {

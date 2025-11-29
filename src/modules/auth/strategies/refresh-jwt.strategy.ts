@@ -1,16 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { ExtractJwt } from 'passport-jwt';
 import { Request } from 'express';
-import { UsersService } from '../../users/services/user.service';
+import { IUserProvider, USER_PROVIDER } from '../interfaces/user-provider.interface';
 
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
     private configService: ConfigService,
-    private usersService: UsersService,
+    @Inject(USER_PROVIDER) private userProvider: IUserProvider,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -25,20 +25,17 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
   }
 
   async validate(req: Request, payload: any) {
-    // Refresh token에서 사용자 정보 추출
     const { sub: userId, email } = payload;
-    
+
     if (!userId || !email) {
       throw new UnauthorizedException('Invalid refresh token payload');
     }
 
-    // 사용자 존재 여부 확인
-    const user = await this.usersService.findByEmail({ email });
+    const user = await this.userProvider.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    // 사용자 활성 상태 확인
     if (!user.isActive) {
       throw new UnauthorizedException('User account is inactive');
     }
