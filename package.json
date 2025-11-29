@@ -16,6 +16,7 @@
   "main": "index.js",
   "scripts": {
     "build": "nest build",
+    "type-check": "tsc --pretty --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "start:dev": "nest start --watch --builder swc",
@@ -39,7 +40,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^4.0.0",
-    "@nestjs/swagger": "^7.0.0",
+    "@nestjs/swagger": "^8.1.1",
     "@okta/jwt-verifier": "^4.0.2",
     "@types/morgan": "^1.9.10",
     "axios": "^1.5.0",
