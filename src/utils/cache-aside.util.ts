@@ -54,16 +54,6 @@ export const repositoryCache = <T extends Document>(repository: BaseRepository<T
   }
 
   /**
-   * 캐시 조회 (NotFound 예외 처리)
-   * @param cacheKey 캐시 키
-   * @param fetchOperation 캐시 조회 함수 (findOneOrThrow 등)
-   * @param expiry 캐시 만료 시간
-   * @returns 캐시 조회 데이터 (항상 존재)
-   */
-  // TODO(human): Implement findWithCacheOrThrow method
-
-
-  /**
    * 캐시 생성
    * @param cacheKey 캐시 키
    * @param createOperation 캐시 생성 함수
