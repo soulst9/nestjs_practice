@@ -1,22 +1,19 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { UserRepository } from '../repositories/user.repository';
 import { UserDocument } from '../schemas/user.schema';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { RedisService } from 'src/common/redis/redis.service';
 import { repositoryCache } from 'src/utils/cache-aside.util';
-import { winstonLogger } from 'src/common/interceptors/winston-logger.config';
-import { UserRoleInfo } from 'src/common/interfaces/sso-provider.interface';
-import { Types } from 'mongoose';
-import { Role, RoleType } from 'src/common/enums/role.enum';
+import { IUserProvider, AuthUser } from '../../auth/interfaces/user-provider.interface';
+import { CacheKeyFactory } from 'src/common/cache/cache-key.factory';
 
 @Injectable()
-export class UsersService {
-  private readonly logger = winstonLogger;
+export class UsersService implements IUserProvider {
   private readonly userRepositoryCache: ReturnType<typeof repositoryCache<UserDocument>>;
 
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly userRoleRepository: UserRoleRepository,
+    // private readonly userRoleRepository: UserRoleRepository,
     private readonly redisService: RedisService,
   ) {
     this.userRepositoryCache = repositoryCache(userRepository, redisService);
@@ -38,45 +35,61 @@ export class UsersService {
 
   /**
    * 사용자 생성 (캐시 포함)
-   * @param createUserDto 사용자 생성 정보
-   * @returns 캐시에 저장 후 반환
    */
   async createUserWithCache(createUserDto: CreateUserDto): Promise<UserDocument> {
-    // 비즈니스 로직: 이메일 중복 체크
-    const existingUser = await this.findByEmail({ email: createUserDto.email });
+    const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
       throw new ConflictException('Already exists email.');
     }
 
-    const cacheKey = `user:${createUserDto.email}`;
+    const cacheKey = CacheKeyFactory.user.byEmail(createUserDto.email);
     const createOperation = () => this.userRepository.create({
       ...createUserDto,
       isActive: true
     });
 
-    // 사용자 생성
     const user = await this.userRepositoryCache.createWithCache(cacheKey, createOperation);
     return user as UserDocument;
   }
 
   /**
-   * 사용자 조회 (ID로, 캐시 포함) - null 허용
-   * @param id 사용자 ID
-   * @param projection 선택할 필드 (옵션)
-   * @returns 조회된 사용자 또는 null
+   * 사용자 조회 (ID로, 캐시 포함)
    */
   async findByIdWithCache(id: string, projection?: Record<string, 1 | 0>): Promise<UserDocument | null> {
-    const cacheKey = `user:${id}`;
+    const cacheKey = CacheKeyFactory.user.byId(id);
     const findOperation = () => this.userRepository.findById(id, projection);
     return this.userRepositoryCache.findWithCache<UserDocument | null>(cacheKey, findOperation);
   }
 
   /**
-   * 사용자 조회 (이메일)
-   * @param email 사용자 이메일
-   * @returns 조회된 사용자
+   * IUserProvider 구현: 이메일로 사용자 조회
    */
-  async findByEmail({ email }: { email: string }): Promise<UserDocument | null> {
-    return await this.userRepository.findOne({ email, isActive: true });
+  async findByEmail(email: string): Promise<AuthUser | null> {
+    const user = await this.userRepository.findOne({ email, isActive: true });
+    if (!user) return null;
+
+    return this.toAuthUser(user);
+  }
+
+  /**
+   * IUserProvider 구현: 사용자 생성
+   */
+  async createUser(dto: CreateUserDto): Promise<AuthUser> {
+    const user = await this.createUserWithCache(dto);
+    return this.toAuthUser(user);
+  }
+
+  /**
+   * UserDocument → AuthUser 변환
+   */
+  private toAuthUser(user: UserDocument): AuthUser {
+    return {
+      id: (user._id as string).toString(),
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      authProvider: user.authProvider,
+      isActive: user.isActive,
+    };
   }
 }
