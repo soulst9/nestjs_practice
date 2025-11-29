@@ -7,11 +7,9 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: 
-      MONGO_INITDB_DATABASE: 
-      MONGODB_URI: 
-      DB_NAME: 
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
     volumes:
       - mongodb_data:/data/db
       - ./tools/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
@@ -47,8 +45,28 @@ services:
       context: ./
       dockerfile: Dockerfile
     container_name: api
-    env_file:
-      - .env.docker
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_WHITE_LIST: ${CORS_WHITE_LIST:-http://localhost:3000}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/resume?authSource=admin}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-password}
+      REDIS_DB: ${REDIS_DB:-0}
+      JWT_SECRET: ${JWT_SECRET:-local-access-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-local-refresh-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      JWT_ID_TOKEN_EXPIRES_IN: ${JWT_ID_TOKEN_EXPIRES_IN:-1h}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID:-your-okta-client-id}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET:-your-okta-client-secret}
+      OKTA_DOMAIN: ${OKTA_DOMAIN:-https://your-okta-domain.okta.com}
+      OKTA_CALLBACK_URL: ${OKTA_CALLBACK_URL:-http://localhost:3000/auth/okta/callback}
+      OKTA_AUDIENCE: ${OKTA_AUDIENCE:-api://default}
+      OKTA_SCOPE: ${OKTA_SCOPE:-openid profile email}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     restart: unless-stopped
     ports:
       - "3000:3000"
